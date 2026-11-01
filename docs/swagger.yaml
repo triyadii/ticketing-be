@@ -1,0 +1,1095 @@
+basePath: /
+definitions:
+  models.Layanan:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      nama_layanan:
+        type: string
+      status:
+        $ref: '#/definitions/models.LayananStatus'
+      updated_at:
+        type: string
+    type: object
+  models.LayananStatus:
+    enum:
+    - aktif
+    - nonaktif
+    type: string
+    x-enum-varnames:
+    - LayananStatusAktif
+    - LayananStatusNonaktif
+  models.Pelapor:
+    properties:
+      created_at:
+        type: string
+      instansi:
+        type: string
+      nama:
+        type: string
+      nik:
+        type: string
+      no_hp:
+        type: string
+      tickets:
+        items:
+          $ref: '#/definitions/models.Ticket'
+        type: array
+      updated_at:
+        type: string
+    type: object
+  models.Ticket:
+    properties:
+      created_at:
+        type: string
+      finished_at:
+        type: string
+      foto:
+        items:
+          type: string
+        type: array
+      id:
+        type: string
+      id_pelayanan:
+        type: string
+      id_petugas:
+        type: string
+      judul_kendala:
+        type: string
+      keterangan:
+        type: string
+      layanan:
+        $ref: '#/definitions/models.Layanan'
+      nik_pelapor:
+        type: string
+      nomor_ticket:
+        type: string
+      pelapor:
+        allOf:
+        - $ref: '#/definitions/models.Pelapor'
+        description: Relasi
+      petugas:
+        $ref: '#/definitions/models.User'
+      solusi:
+        type: string
+      status:
+        $ref: '#/definitions/models.TicketStatus'
+      updated_at:
+        type: string
+    type: object
+  models.TicketStatus:
+    enum:
+    - menunggu
+    - diproses
+    - selesai
+    - dibatalkan
+    type: string
+    x-enum-varnames:
+    - TicketStatusMenunggu
+    - TicketStatusDiproses
+    - TicketStatusSelesai
+    - TicketStatusDibatalkan
+  models.User:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      nama:
+        type: string
+      status:
+        $ref: '#/definitions/models.UserStatus'
+      updated_at:
+        type: string
+      username:
+        type: string
+    type: object
+  models.UserStatus:
+    enum:
+    - aktif
+    - nonaktif
+    type: string
+    x-enum-varnames:
+    - UserStatusAktif
+    - UserStatusNonaktif
+  service.CreateUserRequest:
+    properties:
+      nama:
+        example: Ahmad Dani
+        type: string
+      password:
+        example: rahasia123
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/models.UserStatus'
+        example: aktif
+      username:
+        example: ahmaddani
+        type: string
+    type: object
+  service.LayananRequest:
+    properties:
+      nama_layanan:
+        example: Jaringan & WiFi
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/models.LayananStatus'
+        example: aktif
+    type: object
+  service.LoginRequest:
+    properties:
+      password:
+        example: password123
+        type: string
+      username:
+        example: admin
+        type: string
+    type: object
+  service.LoginResponse:
+    properties:
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/models.User'
+    type: object
+  service.PelaporRequest:
+    properties:
+      instansi:
+        example: Dinas Kependudukan dan Catatan Sipil
+        type: string
+      nama:
+        example: Rahmat Hidayat
+        type: string
+      nik:
+        example: "1207012345670001"
+        type: string
+      no_hp:
+        example: "081234567890"
+        type: string
+    type: object
+  service.UpdateTicketStatusInput:
+    properties:
+      solusi:
+        example: Kabel LAN diganti dan konfigurasi IP direset
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/models.TicketStatus'
+        example: selesai
+    type: object
+  service.UpdateUserRequest:
+    properties:
+      nama:
+        example: Ahmad Dani, S.Kom
+        type: string
+      password:
+        example: passwordBaru123
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/models.UserStatus'
+        example: aktif
+    type: object
+  utils.APIResponse:
+    properties:
+      data: {}
+      errors: {}
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  utils.PaginatedData:
+    properties:
+      items: {}
+      meta:
+        $ref: '#/definitions/utils.PaginationMeta'
+    type: object
+  utils.PaginationMeta:
+    properties:
+      current_page:
+        type: integer
+      per_page:
+        type: integer
+      total_items:
+        type: integer
+      total_pages:
+        type: integer
+    type: object
+host: localhost:8086
+info:
+  contact:
+    email: it-support@deliserdangkab.go.id
+    name: Tim IT Support
+  description: Dokumentasi RESTful API Backend Sistem IT Helpdesk Ticketing dan Manajemen
+    Data Lama Koperasi berbasis Go Fiber & PostgreSQL.
+  title: IT Helpdesk Ticketing & Koperasi API
+  version: "1.0"
+paths:
+  /api/v1/auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Autentikasi akun petugas IT untuk mendapatkan access token JWT
+      parameters:
+      - description: Kredensial Login
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/service.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/service.LoginResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      summary: Login Petugas IT
+      tags:
+      - Auth
+  /api/v1/auth/profile:
+    get:
+      description: Mengambil data detail akun petugas IT berdasarkan token JWT
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.User'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Profil Petugas IT yang Sedang Login
+      tags:
+      - Auth
+  /api/v1/koperasi/data-lama:
+    get:
+      description: Mengambil data lama koperasi dengan pagination, search keyword,
+        filter jenis transaksi, dan range tanggal
+      parameters:
+      - description: 'Nomor halaman (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Item per halaman (default: 10)'
+        in: query
+        name: per_page
+        type: integer
+      - description: Cari kode anggota, nama, unit kerja, keterangan
+        in: query
+        name: search
+        type: string
+      - description: 'Filter jenis transaksi (misal: Simpanan Pokok, Pinjaman Reguler)'
+        in: query
+        name: jenis_transaksi
+        type: string
+      - description: Filter tanggal awal (YYYY-MM-DD)
+        in: query
+        name: start_date
+        type: string
+      - description: Filter tanggal akhir (YYYY-MM-DD)
+        in: query
+        name: end_date
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/utils.PaginatedData'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Menampilkan Data Lama Koperasi
+      tags:
+      - Koperasi (Data Lama)
+  /api/v1/koperasi/data-lama/export:
+    get:
+      description: Mengunduh seluruh data lama koperasi ke berkas spreadsheet Excel
+        (.xlsx) atau CSV
+      parameters:
+      - description: 'Format file export: excel atau csv (default: excel)'
+        enum:
+        - excel
+        - csv
+        in: query
+        name: format
+        type: string
+      - description: Cari kata kunci
+        in: query
+        name: search
+        type: string
+      - description: Filter jenis transaksi
+        in: query
+        name: jenis_transaksi
+        type: string
+      - description: Filter tanggal awal (YYYY-MM-DD)
+        in: query
+        name: start_date
+        type: string
+      - description: Filter tanggal akhir (YYYY-MM-DD)
+        in: query
+        name: end_date
+        type: string
+      produces:
+      - application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+      - text/csv
+      responses:
+        "200":
+          description: File Excel atau CSV hasil export
+          schema:
+            type: file
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Tarik Data Lama (Export Excel / CSV)
+      tags:
+      - Koperasi (Data Lama)
+  /api/v1/layanan:
+    get:
+      description: Mengambil seluruh kategori layanan IT (bisa difilter status)
+      parameters:
+      - description: Filter status (aktif / nonaktif)
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/models.Layanan'
+                  type: array
+              type: object
+      summary: Daftar Layanan IT
+      tags:
+      - Layanan
+    post:
+      consumes:
+      - application/json
+      description: Membuat jenis kategori kendala / layanan IT baru
+      parameters:
+      - description: Data Layanan Baru
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/service.LayananRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Layanan'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Tambah Layanan Baru
+      tags:
+      - Layanan
+  /api/v1/layanan/{id}:
+    delete:
+      description: Menghapus kategori layanan IT
+      parameters:
+      - description: Layanan UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Hapus Layanan IT
+      tags:
+      - Layanan
+    get:
+      description: Mengambil detail kategori layanan IT berdasarkan ID
+      parameters:
+      - description: Layanan UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Layanan'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      summary: Detail Layanan IT
+      tags:
+      - Layanan
+    put:
+      consumes:
+      - application/json
+      description: Memperbarui nama layanan atau status aktif/nonaktif
+      parameters:
+      - description: Layanan UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Data Perubahan Layanan
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/service.LayananRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Layanan'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update Layanan IT
+      tags:
+      - Layanan
+  /api/v1/pelapor:
+    get:
+      description: Mengambil data seluruh pelapor dengan pagination dan pencarian
+      parameters:
+      - description: 'Nomor halaman (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Item per halaman (default: 10)'
+        in: query
+        name: per_page
+        type: integer
+      - description: Cari NIK, Nama, Instansi, atau No HP
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/utils.PaginatedData'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Daftar Pelapor
+      tags:
+      - Pelapor
+    post:
+      consumes:
+      - application/json
+      description: Mendaftarkan master data pelapor pegawai/masyarakat
+      parameters:
+      - description: Data Pelapor
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/service.PelaporRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Pelapor'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      summary: Pendaftaran / Tambah Pelapor
+      tags:
+      - Pelapor
+  /api/v1/pelapor/{nik}:
+    delete:
+      description: Menghapus master data pelapor
+      parameters:
+      - description: NIK Pelapor
+        in: path
+        name: nik
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Hapus Pelapor
+      tags:
+      - Pelapor
+    get:
+      description: Mengambil profil pelapor beserta seluruh riwayat tiket yang pernah
+        dibuat
+      parameters:
+      - description: NIK Pelapor (16 digit)
+        in: path
+        name: nik
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Pelapor'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      summary: Detail Pelapor & Riwayat Tiket
+      tags:
+      - Pelapor
+    put:
+      consumes:
+      - application/json
+      description: Memperbarui nama, instansi, atau kontak nomor HP pelapor
+      parameters:
+      - description: NIK Pelapor
+        in: path
+        name: nik
+        required: true
+        type: string
+      - description: Data Perubahan Pelapor
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/service.PelaporRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Pelapor'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update Profil Pelapor
+      tags:
+      - Pelapor
+  /api/v1/tickets:
+    get:
+      description: Mengambil seluruh tiket dengan filter status, layanan, petugas,
+        pelapor, range tanggal, dan kata kunci
+      parameters:
+      - description: 'Nomor halaman (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Item per halaman (default: 10)'
+        in: query
+        name: per_page
+        type: integer
+      - description: Filter status (menunggu, diproses, selesai, dibatalkan)
+        in: query
+        name: status
+        type: string
+      - description: Filter ID Layanan (UUID)
+        in: query
+        name: id_pelayanan
+        type: string
+      - description: Filter ID Petugas (UUID)
+        in: query
+        name: id_petugas
+        type: string
+      - description: Filter NIK Pelapor
+        in: query
+        name: nik_pelapor
+        type: string
+      - description: Filter tanggal awal (YYYY-MM-DD)
+        in: query
+        name: start_date
+        type: string
+      - description: Filter tanggal akhir (YYYY-MM-DD)
+        in: query
+        name: end_date
+        type: string
+      - description: Cari nomor tiket, judul kendala, atau keterangan
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/utils.PaginatedData'
+              type: object
+      summary: Daftar Tiket Kendala
+      tags:
+      - Tickets
+    post:
+      consumes:
+      - multipart/form-data
+      description: Pelapor mengirimkan tiket kendala baru disertai foto bukti (maksimal
+        3 foto)
+      parameters:
+      - description: NIK Pelapor (16 digit)
+        in: formData
+        name: nik_pelapor
+        required: true
+        type: string
+      - description: Nama Lengkap Pelapor
+        in: formData
+        name: nama
+        required: true
+        type: string
+      - description: OPD / Instansi / Bidang
+        in: formData
+        name: instansi
+        required: true
+        type: string
+      - description: Nomor WhatsApp / HP Aktif
+        in: formData
+        name: no_hp
+        required: true
+        type: string
+      - description: UUID Kategori Layanan
+        in: formData
+        name: id_pelayanan
+        required: true
+        type: string
+      - description: Ringkasan Kendala (maks. 150 karakter)
+        in: formData
+        name: judul_kendala
+        required: true
+        type: string
+      - description: Rincian Detail Kendala
+        in: formData
+        name: keterangan
+        required: true
+        type: string
+      - description: Foto Bukti Kendala (maksimal 3 file, format jpg/png/webp)
+        in: formData
+        name: foto
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Ticket'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      summary: Buat Tiket Kendala Baru (Public)
+      tags:
+      - Tickets
+  /api/v1/tickets/{id}:
+    delete:
+      description: Menghapus tiket kendala dari sistem
+      parameters:
+      - description: UUID Tiket
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Hapus Tiket Kendala
+      tags:
+      - Tickets
+  /api/v1/tickets/{id}/assign:
+    patch:
+      description: Petugas IT menugaskan tiket ke diri sendiri (status berubah menjadi
+        diproses)
+      parameters:
+      - description: UUID Tiket
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Ticket'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Ambil Tiket oleh Petugas IT
+      tags:
+      - Tickets
+  /api/v1/tickets/{id}/status:
+    patch:
+      consumes:
+      - application/json
+      description: Mengubah status tiket (menunggu, diproses, selesai, dibatalkan).
+        Jika status selesai, wajib mengisi field solusi!
+      parameters:
+      - description: UUID Tiket
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Status dan Catatan Solusi
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/service.UpdateTicketStatusInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Ticket'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update Status Tiket
+      tags:
+      - Tickets
+  /api/v1/tickets/{identifier}:
+    get:
+      description: Mengambil rincian tiket berdasarkan UUID atau Nomor Tiket (misal
+        IT-202611-0001)
+      parameters:
+      - description: UUID Tiket atau Nomor Tiket (IT-YYYYMM-XXXX)
+        in: path
+        name: identifier
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Ticket'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      summary: Detail Tiket Kendala
+      tags:
+      - Tickets
+  /api/v1/users:
+    get:
+      description: Mengambil daftar seluruh akun tim IT dengan pagination dan filter
+      parameters:
+      - description: 'Nomor halaman (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Item per halaman (default: 10)'
+        in: query
+        name: per_page
+        type: integer
+      - description: Cari berdasarkan nama atau username
+        in: query
+        name: search
+        type: string
+      - description: Filter status (aktif / nonaktif)
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/utils.PaginatedData'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Daftar Petugas IT
+      tags:
+      - Users (Petugas IT)
+    post:
+      consumes:
+      - application/json
+      description: Membuat akun petugas IT baru
+      parameters:
+      - description: Data Petugas Baru
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/service.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.User'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Tambah Petugas IT Baru
+      tags:
+      - Users (Petugas IT)
+  /api/v1/users/{id}:
+    delete:
+      description: Menghapus data akun petugas IT
+      parameters:
+      - description: User UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Hapus Petugas IT
+      tags:
+      - Users (Petugas IT)
+    get:
+      description: Mengambil detail satu petugas IT berdasarkan UUID
+      parameters:
+      - description: User UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.User'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Detail Petugas IT
+      tags:
+      - Users (Petugas IT)
+    put:
+      consumes:
+      - application/json
+      description: Memperbarui data profil, password, atau status akun petugas IT
+      parameters:
+      - description: User UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Data Perubahan Petugas
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/service.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.User'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Update Petugas IT
+      tags:
+      - Users (Petugas IT)
+schemes:
+- http
+- https
+securityDefinitions:
+  BearerAuth:
+    description: Ketik 'Bearer <token_jwt>' untuk mengakses endpoint yang dilindungi.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

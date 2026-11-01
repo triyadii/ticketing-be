@@ -1,0 +1,1764 @@
+{
+    "schemes": [
+        "http",
+        "https"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "Dokumentasi RESTful API Backend Sistem IT Helpdesk Ticketing dan Manajemen Data Lama Koperasi berbasis Go Fiber \u0026 PostgreSQL.",
+        "title": "IT Helpdesk Ticketing \u0026 Koperasi API",
+        "contact": {
+            "name": "Tim IT Support",
+            "email": "it-support@deliserdangkab.go.id"
+        },
+        "version": "1.0"
+    },
+    "host": "localhost:8086",
+    "basePath": "/",
+    "paths": {
+        "/api/v1/auth/login": {
+            "post": {
+                "description": "Autentikasi akun petugas IT untuk mendapatkan access token JWT",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Login Petugas IT",
+                "parameters": [
+                    {
+                        "description": "Kredensial Login",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/service.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/service.LoginResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/utils.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/profile": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mengambil data detail akun petugas IT berdasarkan token JWT",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Profil Petugas IT yang Sedang Login",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.User"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/utils.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/koperasi/data-lama": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mengambil data lama koperasi dengan pagination, search keyword, filter jenis transaksi, dan range tanggal",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Koperasi (Data Lama)"
+                ],
+                "summary": "Menampilkan Data Lama Koperasi",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Nomor halaman (default: 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Item per halaman (default: 10)",
+                        "name": "per_page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Cari kode anggota, nama, unit kerja, keterangan",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter jenis transaksi (misal: Simpanan Pokok, Pinjaman Reguler)",
+                        "name": "jenis_transaksi",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter tanggal awal (YYYY-MM-DD)",
+                        "name": "start_date",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter tanggal akhir (YYYY-MM-DD)",
+                        "name": "end_date",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/utils.PaginatedData"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/koperasi/data-lama/export": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mengunduh seluruh data lama koperasi ke berkas spreadsheet Excel (.xlsx) atau CSV",
+                "produces": [
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    "text/csv"
+                ],
+                "tags": [
+                    "Koperasi (Data Lama)"
+                ],
+                "summary": "Tarik Data Lama (Export Excel / CSV)",
+                "parameters": [
+                    {
+                        "enum": [
+                            "excel",
+                            "csv"
+                        ],
+                        "type": "string",
+                        "description": "Format file export: excel atau csv (default: excel)",
+                        "name": "format",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Cari kata kunci",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter jenis transaksi",
+                        "name": "jenis_transaksi",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter tanggal awal (YYYY-MM-DD)",
+                        "name": "start_date",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter tanggal akhir (YYYY-MM-DD)",
+                        "name": "end_date",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "File Excel atau CSV hasil export",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/utils.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/layanan": {
+            "get": {
+                "description": "Mengambil seluruh kategori layanan IT (bisa difilter status)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Layanan"
+                ],
+                "summary": "Daftar Layanan IT",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter status (aktif / nonaktif)",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/models.Layanan"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Membuat jenis kategori kendala / layanan IT baru",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Layanan"
+                ],
+                "summary": "Tambah Layanan Baru",
+                "parameters": [
+                    {
+                        "description": "Data Layanan Baru",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/service.LayananRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.Layanan"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/layanan/{id}": {
+            "get": {
+                "description": "Mengambil detail kategori layanan IT berdasarkan ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Layanan"
+                ],
+                "summary": "Detail Layanan IT",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Layanan UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.Layanan"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.APIResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Memperbarui nama layanan atau status aktif/nonaktif",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Layanan"
+                ],
+                "summary": "Update Layanan IT",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Layanan UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Data Perubahan Layanan",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/service.LayananRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.Layanan"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.APIResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Menghapus kategori layanan IT",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Layanan"
+                ],
+                "summary": "Hapus Layanan IT",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Layanan UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/utils.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/pelapor": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mengambil data seluruh pelapor dengan pagination dan pencarian",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Pelapor"
+                ],
+                "summary": "Daftar Pelapor",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Nomor halaman (default: 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Item per halaman (default: 10)",
+                        "name": "per_page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Cari NIK, Nama, Instansi, atau No HP",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/utils.PaginatedData"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Mendaftarkan master data pelapor pegawai/masyarakat",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Pelapor"
+                ],
+                "summary": "Pendaftaran / Tambah Pelapor",
+                "parameters": [
+                    {
+                        "description": "Data Pelapor",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/service.PelaporRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.Pelapor"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/pelapor/{nik}": {
+            "get": {
+                "description": "Mengambil profil pelapor beserta seluruh riwayat tiket yang pernah dibuat",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Pelapor"
+                ],
+                "summary": "Detail Pelapor \u0026 Riwayat Tiket",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "NIK Pelapor (16 digit)",
+                        "name": "nik",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.Pelapor"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.APIResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Memperbarui nama, instansi, atau kontak nomor HP pelapor",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Pelapor"
+                ],
+                "summary": "Update Profil Pelapor",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "NIK Pelapor",
+                        "name": "nik",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Data Perubahan Pelapor",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/service.PelaporRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.Pelapor"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.APIResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Menghapus master data pelapor",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Pelapor"
+                ],
+                "summary": "Hapus Pelapor",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "NIK Pelapor",
+                        "name": "nik",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/utils.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/tickets": {
+            "get": {
+                "description": "Mengambil seluruh tiket dengan filter status, layanan, petugas, pelapor, range tanggal, dan kata kunci",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tickets"
+                ],
+                "summary": "Daftar Tiket Kendala",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Nomor halaman (default: 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Item per halaman (default: 10)",
+                        "name": "per_page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter status (menunggu, diproses, selesai, dibatalkan)",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter ID Layanan (UUID)",
+                        "name": "id_pelayanan",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter ID Petugas (UUID)",
+                        "name": "id_petugas",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter NIK Pelapor",
+                        "name": "nik_pelapor",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter tanggal awal (YYYY-MM-DD)",
+                        "name": "start_date",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter tanggal akhir (YYYY-MM-DD)",
+                        "name": "end_date",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Cari nomor tiket, judul kendala, atau keterangan",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/utils.PaginatedData"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Pelapor mengirimkan tiket kendala baru disertai foto bukti (maksimal 3 foto)",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tickets"
+                ],
+                "summary": "Buat Tiket Kendala Baru (Public)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "NIK Pelapor (16 digit)",
+                        "name": "nik_pelapor",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Nama Lengkap Pelapor",
+                        "name": "nama",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "OPD / Instansi / Bidang",
+                        "name": "instansi",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Nomor WhatsApp / HP Aktif",
+                        "name": "no_hp",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "UUID Kategori Layanan",
+                        "name": "id_pelayanan",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Ringkasan Kendala (maks. 150 karakter)",
+                        "name": "judul_kendala",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Rincian Detail Kendala",
+                        "name": "keterangan",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Foto Bukti Kendala (maksimal 3 file, format jpg/png/webp)",
+                        "name": "foto",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.Ticket"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/tickets/{identifier}": {
+            "get": {
+                "description": "Mengambil rincian tiket berdasarkan UUID atau Nomor Tiket (misal IT-202611-0001)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tickets"
+                ],
+                "summary": "Detail Tiket Kendala",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UUID Tiket atau Nomor Tiket (IT-YYYYMM-XXXX)",
+                        "name": "identifier",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.Ticket"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/tickets/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Menghapus tiket kendala dari sistem",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tickets"
+                ],
+                "summary": "Hapus Tiket Kendala",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UUID Tiket",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/utils.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/tickets/{id}/assign": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Petugas IT menugaskan tiket ke diri sendiri (status berubah menjadi diproses)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tickets"
+                ],
+                "summary": "Ambil Tiket oleh Petugas IT",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UUID Tiket",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.Ticket"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/tickets/{id}/status": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mengubah status tiket (menunggu, diproses, selesai, dibatalkan). Jika status selesai, wajib mengisi field solusi!",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Tickets"
+                ],
+                "summary": "Update Status Tiket",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UUID Tiket",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Status dan Catatan Solusi",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/service.UpdateTicketStatusInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.Ticket"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mengambil daftar seluruh akun tim IT dengan pagination dan filter",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users (Petugas IT)"
+                ],
+                "summary": "Daftar Petugas IT",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Nomor halaman (default: 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Item per halaman (default: 10)",
+                        "name": "per_page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Cari berdasarkan nama atau username",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter status (aktif / nonaktif)",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/utils.PaginatedData"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Membuat akun petugas IT baru",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users (Petugas IT)"
+                ],
+                "summary": "Tambah Petugas IT Baru",
+                "parameters": [
+                    {
+                        "description": "Data Petugas Baru",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/service.CreateUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.User"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mengambil detail satu petugas IT berdasarkan UUID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users (Petugas IT)"
+                ],
+                "summary": "Detail Petugas IT",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.User"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/utils.APIResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Memperbarui data profil, password, atau status akun petugas IT",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users (Petugas IT)"
+                ],
+                "summary": "Update Petugas IT",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Data Perubahan Petugas",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/service.UpdateUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/utils.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.User"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.APIResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Menghapus data akun petugas IT",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users (Petugas IT)"
+                ],
+                "summary": "Hapus Petugas IT",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/utils.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/utils.APIResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "models.Layanan": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "nama_layanan": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/models.LayananStatus"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.LayananStatus": {
+            "type": "string",
+            "enum": [
+                "aktif",
+                "nonaktif"
+            ],
+            "x-enum-varnames": [
+                "LayananStatusAktif",
+                "LayananStatusNonaktif"
+            ]
+        },
+        "models.Pelapor": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "instansi": {
+                    "type": "string"
+                },
+                "nama": {
+                    "type": "string"
+                },
+                "nik": {
+                    "type": "string"
+                },
+                "no_hp": {
+                    "type": "string"
+                },
+                "tickets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Ticket"
+                    }
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.Ticket": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "finished_at": {
+                    "type": "string"
+                },
+                "foto": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                },
+                "id_pelayanan": {
+                    "type": "string"
+                },
+                "id_petugas": {
+                    "type": "string"
+                },
+                "judul_kendala": {
+                    "type": "string"
+                },
+                "keterangan": {
+                    "type": "string"
+                },
+                "layanan": {
+                    "$ref": "#/definitions/models.Layanan"
+                },
+                "nik_pelapor": {
+                    "type": "string"
+                },
+                "nomor_ticket": {
+                    "type": "string"
+                },
+                "pelapor": {
+                    "description": "Relasi",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.Pelapor"
+                        }
+                    ]
+                },
+                "petugas": {
+                    "$ref": "#/definitions/models.User"
+                },
+                "solusi": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/models.TicketStatus"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.TicketStatus": {
+            "type": "string",
+            "enum": [
+                "menunggu",
+                "diproses",
+                "selesai",
+                "dibatalkan"
+            ],
+            "x-enum-varnames": [
+                "TicketStatusMenunggu",
+                "TicketStatusDiproses",
+                "TicketStatusSelesai",
+                "TicketStatusDibatalkan"
+            ]
+        },
+        "models.User": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "nama": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/models.UserStatus"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.UserStatus": {
+            "type": "string",
+            "enum": [
+                "aktif",
+                "nonaktif"
+            ],
+            "x-enum-varnames": [
+                "UserStatusAktif",
+                "UserStatusNonaktif"
+            ]
+        },
+        "service.CreateUserRequest": {
+            "type": "object",
+            "properties": {
+                "nama": {
+                    "type": "string",
+                    "example": "Ahmad Dani"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "rahasia123"
+                },
+                "status": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.UserStatus"
+                        }
+                    ],
+                    "example": "aktif"
+                },
+                "username": {
+                    "type": "string",
+                    "example": "ahmaddani"
+                }
+            }
+        },
+        "service.LayananRequest": {
+            "type": "object",
+            "properties": {
+                "nama_layanan": {
+                    "type": "string",
+                    "example": "Jaringan \u0026 WiFi"
+                },
+                "status": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.LayananStatus"
+                        }
+                    ],
+                    "example": "aktif"
+                }
+            }
+        },
+        "service.LoginRequest": {
+            "type": "object",
+            "properties": {
+                "password": {
+                    "type": "string",
+                    "example": "password123"
+                },
+                "username": {
+                    "type": "string",
+                    "example": "admin"
+                }
+            }
+        },
+        "service.LoginResponse": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/models.User"
+                }
+            }
+        },
+        "service.PelaporRequest": {
+            "type": "object",
+            "properties": {
+                "instansi": {
+                    "type": "string",
+                    "example": "Dinas Kependudukan dan Catatan Sipil"
+                },
+                "nama": {
+                    "type": "string",
+                    "example": "Rahmat Hidayat"
+                },
+                "nik": {
+                    "type": "string",
+                    "example": "1207012345670001"
+                },
+                "no_hp": {
+                    "type": "string",
+                    "example": "081234567890"
+                }
+            }
+        },
+        "service.UpdateTicketStatusInput": {
+            "type": "object",
+            "properties": {
+                "solusi": {
+                    "type": "string",
+                    "example": "Kabel LAN diganti dan konfigurasi IP direset"
+                },
+                "status": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.TicketStatus"
+                        }
+                    ],
+                    "example": "selesai"
+                }
+            }
+        },
+        "service.UpdateUserRequest": {
+            "type": "object",
+            "properties": {
+                "nama": {
+                    "type": "string",
+                    "example": "Ahmad Dani, S.Kom"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "passwordBaru123"
+                },
+                "status": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.UserStatus"
+                        }
+                    ],
+                    "example": "aktif"
+                }
+            }
+        },
+        "utils.APIResponse": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "errors": {},
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "utils.PaginatedData": {
+            "type": "object",
+            "properties": {
+                "items": {},
+                "meta": {
+                    "$ref": "#/definitions/utils.PaginationMeta"
+                }
+            }
+        },
+        "utils.PaginationMeta": {
+            "type": "object",
+            "properties": {
+                "current_page": {
+                    "type": "integer"
+                },
+                "per_page": {
+                    "type": "integer"
+                },
+                "total_items": {
+                    "type": "integer"
+                },
+                "total_pages": {
+                    "type": "integer"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "Ketik 'Bearer \u003ctoken_jwt\u003e' untuk mengakses endpoint yang dilindungi.",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}
