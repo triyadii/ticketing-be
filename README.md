@@ -47,6 +47,7 @@ Aplikasi backend RESTful API berkinerja tinggi yang dibangun menggunakan **Go (G
 * **Dokumentasi API**: [Swaggo](https://github.com/swaggo/swag) + `gofiber/swagger`
 * **Spreadsheet Generator**: [Excelize v2](https://github.com/xuri/excelize)
 * **Keamanan**: JWT (`golang-jwt/jwt/v5`) & Bcrypt (`golang.org/x/crypto/bcrypt`)
+* **Containerization**: Docker & Docker Compose
 
 ---
 
@@ -99,44 +100,36 @@ Aplikasi backend RESTful API berkinerja tinggi yang dibangun menggunakan **Go (G
 
 ## ⚙️ Menjalankan Aplikasi
 
-### 1. Konfigurasi Environment (`.env`)
-Salin berkas `.env.example` ke `.env` lalu sesuaikan kredensial PostgreSQL Anda:
+### Opsi A: Menggunakan Docker Compose (Database di Host)
+
+1. Pastikan berkas `.env` sudah sesuai (password db, port, dll).
+2. Jalankan container:
+   ```bash
+   docker compose up --build -d
+   ```
+3. Memeriksa logs aplikasi:
+   ```bash
+   docker compose logs -f app
+   ```
+
+> **Catatan Koneksi ke PostgreSQL Host (Linux):**
+> * File `docker-compose.yml` telah dikonfigurasi menggunakan `extra_hosts: - "host.docker.internal:host-gateway"`.
+> * Jika tidak ingin mengubah konfigurasi listen IP PostgreSQL di host, Anda juga bisa mengaktifkan `network_mode: "host"` pada `docker-compose.yml` dan tetap menggunakan `DB_HOST=127.0.0.1`.
+
+---
+
+### Opsi B: Menjalankan Langsung di Host (Go / Air)
+
 ```bash
-cp .env.example .env
-```
-Default konfigurasi:
-```env
-APP_NAME="IT Helpdesk Ticketing API"
-APP_PORT=8086
-APP_ENV=development
-APP_URL=http://localhost:8086
+# 1. Menggunakan Live-Reload Air
+air
 
-DB_HOST=127.0.0.1
-DB_PORT=5432
-DB_USER=dii
-DB_PASSWORD="Dicokerenz20!"
-DB_NAME=ticketing_db
-DB_SSLMODE=disable
-DB_TIMEZONE=Asia/Jakarta
-
-JWT_SECRET=super_secret_jwt_key_ticketing_helpdesk_2026_itds!
-JWT_EXPIRE_HOURS=72
-
-UPLOAD_DIR=./storage/uploads/tickets
-MAX_FILE_SIZE_MB=5
-```
-
-### 2. Jalankan Server
-```bash
-# Menggunakan go run
-go run cmd/api/main.go
-
-# Atau build binary
+# 2. Atau build binary langsung
 go build -o server cmd/api/main.go
 ./server
 ```
 
-> **Akun Admin Default:**
+> **Akun Admin IT Default:**
 > * **Username:** `admin`
 > * **Password:** `password123`
 

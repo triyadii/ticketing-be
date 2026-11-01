@@ -1,0 +1,10 @@
+.git
+.gitignore
+.dockerignore
+.air.toml
+README.md
+server
+tmp/
+*.log
+storage/uploads/tickets/*
+!storage/uploads/tickets/.gitkeep

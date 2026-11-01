@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ticketing_be_app
+    restart: unless-stopped
+    ports:
+      - "8086:8086"
+    env_file:
+      - .env
+    environment:
+      # Override DB_HOST agar container dapat menghubungi PostgreSQL di Host
+      # Pastikan DB_HOST menggunakan host.docker.internal atau IP host
+      - DB_HOST=${DB_HOST:-host.docker.internal}
+    extra_hosts:
+      # Menghubungkan container ke localhost mesin host (Linux, Mac, Windows)
+      - "host.docker.internal:host-gateway"
+    volumes:
+      # Mount folder storage agar file upload (foto tiket) tetap tersimpan di host
+      - ./storage:/app/storage
+    
+    # CATATAN KHUSUS LINUX:
+    # Jika tidak ingin mengubah konfigurasi listen_addresses PostgreSQL di host,
+    # Anda juga bisa mengaktifkan mode network host di bawah ini (hilangkan tanda #):
+    # network_mode: "host"
